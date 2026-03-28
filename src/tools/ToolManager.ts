@@ -81,8 +81,7 @@ export class ToolManager {
     tool?.setChar(ch);
   }
 
-  setTextBuffer(text: string) {
-    const tool = this.tools.get("text") as TextTool | undefined;
-    tool?.setBuffer(text);
+  getTextTool(): TextTool {
+    return this.tools.get("text") as TextTool;
   }
 }

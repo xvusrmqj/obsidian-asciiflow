@@ -25,6 +25,7 @@ export class CanvasRenderer {
   private panY = 0;
   private zoom = 1;
   private selection: { startRow: number; startCol: number; endRow: number; endCol: number } | null = null;
+  private textCursor: { row: number; col: number } | null = null;
 
   constructor(canvas: HTMLCanvasElement, grid: Grid, options: CanvasRendererOptions, theme: CanvasTheme) {
     const ctx = canvas.getContext("2d");
@@ -144,11 +145,24 @@ export class CanvasRenderer {
       ctx.strokeRect(x, y, w, h);
     }
 
+    // Draw text cursor (blinking line)
+    if (this.textCursor) {
+      const { row, col } = this.textCursor;
+      const x = col * cellWidth;
+      const y = row * cellHeight;
+      ctx.fillStyle = this.theme.foreground || "#e0e0e0";
+      ctx.fillRect(x, y, 2, cellHeight);
+    }
+
     ctx.restore();
   }
 
   setSelection(sel: { startRow: number; startCol: number; endRow: number; endCol: number } | null) {
     this.selection = sel;
+  }
+
+  setTextCursor(cursor: { row: number; col: number } | null) {
+    this.textCursor = cursor;
   }
 
   private applyFont() {

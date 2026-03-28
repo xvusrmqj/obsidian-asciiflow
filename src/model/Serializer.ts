@@ -29,6 +29,10 @@ export function gridToText(grid: Grid): string {
     for (let c = 0; c < cols; c += 1) {
       const ch = grid.getCell(r, c) || " ";
       line += ch;
+      const width = charWidth(ch);
+      if (width > 1) {
+        c += width - 1;
+      }
     }
     lines.push(line.replace(/\s+$/g, ""));
   }

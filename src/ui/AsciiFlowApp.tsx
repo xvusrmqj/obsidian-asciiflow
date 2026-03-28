@@ -4,6 +4,7 @@ import { gridFromText, gridToText } from "../model/Serializer";
 import { CanvasRenderer, CanvasRendererOptions } from "../renderer/CanvasRenderer";
 import { InputHandler } from "../input/InputHandler";
 import { ToolManager } from "../tools/ToolManager";
+import { ToolContext } from "../tools/ToolContext";
 import { ToolId, ToolPointerState } from "../tools/ToolTypes";
 
 export type AsciiFlowAppProps = {
@@ -24,11 +25,12 @@ export function AsciiFlowApp({ initialText, onSave, onCancel }: AsciiFlowAppProp
   const [grid] = useState(() => gridFromText(initialText || "", 40, 120));
   const [cursor, setCursor] = useState({ row: 0, col: 0 });
   const [freeformChar, setFreeformChar] = useState("*");
-  const [textBuffer, setTextBuffer] = useState("");
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const rendererRef = useRef<CanvasRenderer | null>(null);
   const inputRef = useRef<InputHandler | null>(null);
   const toolManagerRef = useRef<ToolManager | null>(null);
+  const hiddenInputRef = useRef<HTMLTextAreaElement | null>(null);
+  const isComposingRef = useRef(false);
   const activeToolRef = useRef<ToolId>(activeTool);
   const pointerStateRef = useRef<ToolPointerState>({
     startRow: 0,
@@ -41,6 +43,11 @@ export function AsciiFlowApp({ initialText, onSave, onCancel }: AsciiFlowAppProp
   // Keep the ref in sync so pointer handlers always see the latest tool
   useEffect(() => {
     activeToolRef.current = activeTool;
+    // Deactivate text cursor when switching away from text tool
+    if (activeTool !== "text") {
+      toolManagerRef.current?.getTextTool().deactivate();
+      rendererRef.current?.setTextCursor(null);
+    }
   }, [activeTool]);
 
   // grid is mutated in-place by tools, so we can't rely on useMemo with a stable reference.
@@ -80,6 +87,12 @@ export function AsciiFlowApp({ initialText, onSave, onCancel }: AsciiFlowAppProp
     });
     selectTool.setClearHighlight(() => {
       renderer.setSelection(null);
+    });
+
+    // Wire text tool cursor to renderer
+    const textTool = toolManagerRef.current.getTextTool();
+    textTool.setOnCursorChange((row, col) => {
+      renderer.setTextCursor(row !== null && col !== null ? { row, col } : null);
     });
 
     const resize = () => {
@@ -123,12 +136,49 @@ export function AsciiFlowApp({ initialText, onSave, onCancel }: AsciiFlowAppProp
     );
 
     const handleKey = (event: KeyboardEvent) => {
+      // Skip all key handling during IME composition
+      if (isComposingRef.current) return;
+
       if (event.ctrlKey && event.key.toLowerCase() === "z") {
         event.preventDefault();
         if (event.shiftKey) {
           toolManagerRef.current?.redo();
         } else {
           toolManagerRef.current?.undo();
+        }
+        return;
+      }
+
+      // Text tool inline typing
+      const textTool = toolManagerRef.current?.getTextTool();
+      if (textTool && textTool.isActive()) {
+        if (event.ctrlKey || event.metaKey) {
+          // Allow Ctrl+C/V/X etc. to pass through even when text tool is active
+          // but only for specific shortcuts
+          if (event.key.toLowerCase() === "c" || event.key.toLowerCase() === "x") {
+            // fall through to select tool handling below
+          } else if (event.key.toLowerCase() === "v") {
+            // fall through to paste handling below
+          } else {
+            return;
+          }
+        } else if (event.key === "Backspace" || event.key === "Delete" || event.key === "Enter" ||
+                   event.key === "Escape" || event.key === "Tab" ||
+                   event.key.startsWith("Arrow")) {
+          event.preventDefault();
+          const ctx: ToolContext = {
+            grid,
+            setCell: (r, c, v) => grid.setCell(r, c, v),
+            getCell: (r, c) => grid.getCell(r, c),
+            render: () => renderer.render(),
+          };
+          textTool.handleKey(event.key, ctx);
+          return;
+        } else if (event.key.length === 1) {
+          // Single printable chars are handled via hidden textarea input event
+          // (supports IME). Only handle directly if not coming from a composition.
+          // The hidden textarea will fire 'input' for direct key presses too.
+          return;
         }
       }
 
@@ -187,9 +237,89 @@ export function AsciiFlowApp({ initialText, onSave, onCancel }: AsciiFlowAppProp
     toolManagerRef.current?.setFreeformChar(freeformChar);
   }, [freeformChar]);
 
+  // Hidden textarea for IME (Input Method Editor) support
+  // When text tool is active, we keep a hidden textarea focused so that
+  // composition events (Chinese, Japanese, Korean input) work correctly.
   useEffect(() => {
-    toolManagerRef.current?.setTextBuffer(textBuffer);
-  }, [textBuffer]);
+    const textarea = hiddenInputRef.current;
+    if (!textarea) return;
+
+    const handleCompositionStart = () => {
+      isComposingRef.current = true;
+    };
+
+    const handleCompositionEnd = () => {
+      isComposingRef.current = false;
+      // Process the committed text from composition
+      const textTool = toolManagerRef.current?.getTextTool();
+      if (!textTool || !textTool.isActive()) return;
+
+      const value = textarea.value;
+      if (!value) return;
+
+      const ctx: ToolContext = {
+        grid,
+        setCell: (r, c, v) => grid.setCell(r, c, v),
+        getCell: (r, c) => grid.getCell(r, c),
+        render: () => rendererRef.current?.render() ?? (() => {}),
+      };
+
+      for (const ch of value) {
+        textTool.handleChar(ch, ctx);
+      }
+
+      // Clear the textarea so it's ready for the next input
+      textarea.value = "";
+    };
+
+    const handleInput = () => {
+      // During IME composition, do NOT process input — let the IME work.
+      // Only handle direct (non-IME) key presses here.
+      if (isComposingRef.current) return;
+
+      const textTool = toolManagerRef.current?.getTextTool();
+      if (!textTool || !textTool.isActive()) return;
+
+      const value = textarea.value;
+      if (!value) return;
+
+      const ctx: ToolContext = {
+        grid,
+        setCell: (r, c, v) => grid.setCell(r, c, v),
+        getCell: (r, c) => grid.getCell(r, c),
+        render: () => rendererRef.current?.render() ?? (() => {}),
+      };
+
+      for (const ch of value) {
+        textTool.handleChar(ch, ctx);
+      }
+
+      // Clear the textarea so it's ready for the next input
+      textarea.value = "";
+    };
+
+    textarea.addEventListener("compositionstart", handleCompositionStart);
+    textarea.addEventListener("compositionend", handleCompositionEnd);
+    textarea.addEventListener("input", handleInput);
+
+    return () => {
+      textarea.removeEventListener("compositionstart", handleCompositionStart);
+      textarea.removeEventListener("compositionend", handleCompositionEnd);
+      textarea.removeEventListener("input", handleInput);
+    };
+  }, [grid]);
+
+  // Focus the hidden textarea when text tool becomes active and cursor is placed
+  useEffect(() => {
+    const textarea = hiddenInputRef.current;
+    if (!textarea) return;
+
+    if (activeTool === "text") {
+      // Focus on next tick so click event doesn't steal focus
+      const timer = setTimeout(() => textarea.focus(), 0);
+      return () => clearTimeout(timer);
+    }
+  }, [activeTool, cursor]);
 
   useEffect(() => {
     const handleKey = (event: KeyboardEvent) => {
@@ -233,16 +363,6 @@ export function AsciiFlowApp({ initialText, onSave, onCancel }: AsciiFlowAppProp
         >
           Text
         </button>
-        <input
-          type="text"
-          placeholder="Text"
-          value={textBuffer}
-          onChange={(event) => {
-            setTextBuffer(event.target.value);
-            toolManagerRef.current?.setTextBuffer(event.target.value);
-          }}
-          style={{ width: 160 }}
-        />
         <button
           className={activeTool === "freeform" ? "active" : undefined}
           onClick={() => setActiveTool("freeform")}
@@ -270,6 +390,18 @@ export function AsciiFlowApp({ initialText, onSave, onCancel }: AsciiFlowAppProp
 
       <div className="asciiflow-canvas-container">
         <canvas ref={canvasRef} />
+        <textarea
+          ref={hiddenInputRef}
+          style={{
+            position: "absolute",
+            left: "-9999px",
+            top: "-9999px",
+            width: "1px",
+            height: "1px",
+            opacity: 0,
+          }}
+          aria-hidden="true"
+        />
       </div>
 
       <div className="asciiflow-status">
