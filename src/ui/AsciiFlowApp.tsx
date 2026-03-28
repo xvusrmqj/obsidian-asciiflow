@@ -14,10 +14,12 @@ export type AsciiFlowAppProps = {
 };
 
 const tools = [
-  { id: "box", label: "Box" },
   { id: "select", label: "Select" },
+  { id: "box", label: "Box" },
+  { id: "line", label: "Line" },
   { id: "arrow", label: "Arrow" },
-  { id: "line", label: "Line" }
+  { id: "text", label: "Text" },
+  { id: "freeform", label: "Freeform" }
 ];
 
 export function AsciiFlowApp({ initialText, onSave, onCancel }: AsciiFlowAppProps) {
@@ -332,12 +334,12 @@ export function AsciiFlowApp({ initialText, onSave, onCancel }: AsciiFlowAppProp
     const handleKey = (event: KeyboardEvent) => {
       if (event.altKey) {
         const map: Record<string, ToolId> = {
-          "1": "box",
-          "2": "select",
-          "3": "freeform",
+          "1": "select",
+          "2": "box",
+          "3": "line",
           "4": "arrow",
-          "5": "line",
-          "6": "text"
+          "5": "text",
+          "6": "freeform"
         };
         const next = map[event.key];
         if (next) {
@@ -364,18 +366,6 @@ export function AsciiFlowApp({ initialText, onSave, onCancel }: AsciiFlowAppProp
             {tool.label}
           </button>
         ))}
-        <button
-          className={activeTool === "text" ? "active" : undefined}
-          onClick={() => setActiveTool("text")}
-        >
-          Text
-        </button>
-        <button
-          className={activeTool === "freeform" ? "active" : undefined}
-          onClick={() => setActiveTool("freeform")}
-        >
-          Freeform
-        </button>
         <input
           type="text"
           placeholder="Char"
