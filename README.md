@@ -56,10 +56,17 @@ Use an `asciiflow` code block in any Obsidian Markdown file:
 
 ## Installation
 
+### From Obsidian Community Plugins (Recommended)
+
+1. Open Obsidian Settings → Community Plugins
+2. Disable **Safe Mode** if enabled
+3. Click **Browse** and search for **ASCIIFlow**
+4. Click **Install**, then **Enable**
+
 ### Manual Installation
 
-1. Download `main.js` and `manifest.json` from the latest [Release](../../releases)
-2. Create the folder `.obsidian/plugins/obsidian-asciiflow/` in your Obsidian vault
+1. Download `main.js`, `manifest.json`, and `styles.css` from the latest [Release](../../releases)
+2. Create the folder `.obsidian/plugins/asciiflow/` in your Obsidian vault
 3. Copy the downloaded files into that folder
 4. Enable **ASCIIFlow** in Obsidian Settings → Community Plugins
 
@@ -67,7 +74,7 @@ Use an `asciiflow` code block in any Obsidian Markdown file:
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/obsidian-asciiflow.git
+git clone https://github.com/xvusrmqj/obsidian-asciiflow.git
 cd obsidian-asciiflow
 
 # Install dependencies

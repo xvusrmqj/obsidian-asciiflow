@@ -56,10 +56,17 @@
 
 ## 安装
 
+### 从 Obsidian 社区插件市场安装（推荐）
+
+1. 打开 Obsidian 设置 → 社区插件
+2. 如果开启了**安全模式**，请先关闭
+3. 点击**浏览**，搜索 **ASCIIFlow**
+4. 点击**安装**，然后**启用**
+
 ### 手动安装
 
-1. 下载最新 Release 中的 `main.js`、`manifest.json`
-2. 在 Obsidian 库中创建 `.obsidian/plugins/obsidian-asciiflow/` 目录
+1. 下载最新 Release 中的 `main.js`、`manifest.json`、`styles.css`
+2. 在 Obsidian 库中创建 `.obsidian/plugins/asciiflow/` 目录
 3. 将下载的文件放入该目录
 4. 在 Obsidian 设置 → 社区插件中启用 **ASCIIFlow**
 
@@ -67,7 +74,7 @@
 
 ```bash
 # 克隆仓库
-git clone https://github.com/your-username/obsidian-asciiflow.git
+git clone https://github.com/xvusrmqj/obsidian-asciiflow.git
 cd obsidian-asciiflow
 
 # 安装依赖
