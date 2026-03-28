@@ -123,8 +123,8 @@ export class TextTool implements ITool {
       case "Tab":
         // Insert 4 spaces
         for (let i = 0; i < 4; i++) {
-          ctx.setCell(this.cursorRow, this.cursorCol!, " ");
-          this.cursorCol! += 1;
+          ctx.setCell(this.cursorRow, this.cursorCol, " ");
+          this.cursorCol += 1;
         }
         this.onCursorChange?.(this.cursorRow, this.cursorCol);
         ctx.render();

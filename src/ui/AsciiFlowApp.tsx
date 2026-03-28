@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Grid } from "../model/Grid";
 import { gridFromText, gridToText } from "../model/Serializer";
 import { CanvasRenderer, CanvasRendererOptions } from "../renderer/CanvasRenderer";
 import { InputHandler } from "../input/InputHandler";

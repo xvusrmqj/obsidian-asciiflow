@@ -12,7 +12,10 @@
 ✅ Light & dark theme support
 ✅ CJK & IME compatible
 
-Install from Obsidian Community Plugins → search "ASCIIFlow"
+📦 Install manually:
+1. Download main.js, manifest.json, styles.css from GitHub Releases
+2. Create .obsidian/plugins/asciiflow/ in your vault
+3. Copy files & enable the plugin
 
 🔗 https://github.com/xvusrmqj/obsidian-asciiflow
 
@@ -41,7 +44,9 @@ Install from Obsidian Community Plugins → search "ASCIIFlow"
 在笔记里写一个 `asciiflow` 代码块，点击 Edit 按钮就能打开可视化编辑器，画完自动保存回笔记。
 
 📦 安装方式：
-Obsidian 设置 → 社区插件 → 浏览 → 搜索「ASCIIFlow」→ 安装
+1. 去 GitHub Releases 下载 main.js、manifest.json、styles.css
+2. 在 Obsidian 库中创建 .obsidian/plugins/asciiflow/ 目录
+3. 把文件放进去，然后在设置 → 社区插件中启用
 
 🔗 GitHub: https://github.com/xvusrmqj/obsidian-asciiflow
 
@@ -82,7 +87,11 @@ Use an `asciiflow` code block in any note, and it renders as an interactive ASCI
 ```
 
 **Install:**
-Search for "ASCIIFlow" in Obsidian Community Plugins, or visit the GitHub repo:
+1. Download `main.js`, `manifest.json`, and `styles.css` from the [latest release](https://github.com/xvusrmqj/obsidian-asciiflow/releases)
+2. Create the folder `.obsidian/plugins/asciiflow/` in your vault
+3. Copy the files into that folder
+4. Enable **ASCIIFlow** in Settings → Community Plugins
+
 https://github.com/xvusrmqj/obsidian-asciiflow
 
 Feedback and suggestions are welcome!
