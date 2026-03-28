@@ -1,0 +1,10 @@
+{
+  "id": "obsidian-asciiflow",
+  "name": "ASCIIFlow",
+  "version": "0.0.1",
+  "minAppVersion": "1.5.0",
+  "description": "ASCIIFlow-style ASCII art editor for Obsidian code blocks.",
+  "author": "Your Name",
+  "authorUrl": "",
+  "isDesktopOnly": false
+}
