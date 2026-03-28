@@ -4,7 +4,17 @@ import { charWidth } from "./CharWidth";
 export function gridFromText(text: string, minRows = 40, minCols = 120): Grid {
   const lines = text.replace(/\r\n/g, "\n").split("\n");
   const rows = Math.max(lines.length, minRows, 1);
-  const cols = Math.max(...lines.map((line) => line.length), minCols, 1);
+  const cols = Math.max(
+    ...lines.map((line) => {
+      let w = 0;
+      for (const ch of Array.from(line)) {
+        w += charWidth(ch);
+      }
+      return w;
+    }),
+    minCols,
+    1
+  );
   const grid = new Grid(rows, cols);
 
   lines.forEach((line, row) => {

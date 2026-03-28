@@ -1,4 +1,5 @@
 import { Grid } from "../model/Grid";
+import { gridFromText, gridToText } from "../model/Serializer";
 import { ITool } from "./ITool";
 import { ToolContext } from "./ToolContext";
 import { ToolPointerState } from "./ToolTypes";
@@ -21,7 +22,6 @@ export type DragPreview = {
 export class SelectTool implements ITool {
   id = "select";
   private selection: Selection | null = null;
-  private clipboard: Grid | null = null;
   private renderHighlight: ((sel: Selection) => void) | null = null;
   private clearHighlight: (() => void) | null = null;
   private renderDragPreview: ((preview: DragPreview | null) => void) | null = null;
@@ -140,25 +140,28 @@ export class SelectTool implements ITool {
     ctx.render();
   }
 
-  /** Copy the selected region into the internal clipboard. */
-  copy(ctx: ToolContext) {
-    if (!this.selection) return;
-    this.clipboard = this.captureSelection(ctx, this.normalized());
+  /** Copy the selected region and return the text for system clipboard. */
+  copy(ctx: ToolContext): string | null {
+    if (!this.selection) return null;
+    const captured = this.captureSelection(ctx, this.normalized());
+    return gridToText(captured);
   }
 
-  /** Copy then clear the selected region. */
-  cut(ctx: ToolContext) {
-    this.copy(ctx);
-    this.deleteSelection(ctx);
+  /** Copy then clear the selected region, return text for system clipboard. */
+  cut(ctx: ToolContext): string | null {
+    const text = this.copy(ctx);
+    if (text !== null) {
+      this.deleteSelection(ctx);
+    }
+    return text;
   }
 
-  /** Paste the clipboard at the current selection start (or 0,0). */
-  paste(ctx: ToolContext) {
-    if (!this.clipboard) return;
-    const { rows, cols } = this.clipboard.getSize();
+  /** Paste text at the current selection start (or 0,0). */
+  paste(text: string, ctx: ToolContext) {
+    const externalGrid = gridFromText(text, 1, 1);
     const targetRow = this.selection ? this.normalized().startRow : 0;
     const targetCol = this.selection ? this.normalized().startCol : 0;
-    this.clipboard.forEachCell(({ row, col, value }) => {
+    externalGrid.forEachCell(({ row, col, value }) => {
       ctx.setCell(targetRow + row, targetCol + col, value);
     });
     ctx.render();

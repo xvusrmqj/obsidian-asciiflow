@@ -2,6 +2,7 @@ import { ITool } from "./ITool";
 import { ToolContext } from "./ToolContext";
 import { ToolPointerState } from "./ToolTypes";
 import { charWidth } from "../model/CharWidth";
+import { gridFromText } from "../model/Serializer";
 
 export class TextTool implements ITool {
   id = "text";
@@ -138,5 +139,29 @@ export class TextTool implements ITool {
     this.cursorRow = null;
     this.cursorCol = null;
     this.onCursorChange?.(null, null);
+  }
+
+  /** Paste external text at the current cursor position */
+  pasteText(text: string, ctx: ToolContext) {
+    if (this.cursorRow === null || this.cursorCol === null) return;
+    const externalGrid = gridFromText(text, 1, 1);
+    const startRow = this.cursorRow;
+    const startCol = this.cursorCol;
+    let maxEndCol = startCol;
+    externalGrid.forEachCell(({ row, col, value }) => {
+      ctx.setCell(startRow + row, startCol + col, value);
+      maxEndCol = Math.max(maxEndCol, startCol + col + 1);
+    });
+    // Move cursor to end of first line of pasted content
+    const lines = text.replace(/\r\n/g, "\n").split("\n");
+    if (lines.length === 1) {
+      this.cursorRow = startRow;
+      this.cursorCol = startCol + lines[0].length;
+    } else {
+      this.cursorRow = startRow + lines.length - 1;
+      this.cursorCol = lines[lines.length - 1].length;
+    }
+    this.onCursorChange?.(this.cursorRow, this.cursorCol);
+    ctx.render();
   }
 }

@@ -167,7 +167,9 @@ export function AsciiFlowApp({ initialText, onSave, onCancel }: AsciiFlowAppProp
           if (event.key.toLowerCase() === "c" || event.key.toLowerCase() === "x") {
             // fall through to select tool handling below
           } else if (event.key.toLowerCase() === "v") {
-            // fall through to paste handling below
+            // paste is handled by the 'paste' event listener — just prevent default here
+            event.preventDefault();
+            return;
           } else {
             return;
           }
@@ -205,39 +207,67 @@ export function AsciiFlowApp({ initialText, onSave, onCancel }: AsciiFlowAppProp
         }
         if (event.ctrlKey && event.key.toLowerCase() === "c") {
           event.preventDefault();
-          sel.copy({
+          const text = sel.copy({
             grid,
             setCell: (r, c, v) => grid.setCell(r, c, v),
             getCell: (r, c) => grid.getCell(r, c),
             render: () => renderer.render(),
           });
+          if (text !== null) {
+            navigator.clipboard.writeText(text).catch(() => {});
+          }
         }
         if (event.ctrlKey && event.key.toLowerCase() === "x") {
           event.preventDefault();
-          sel.cut({
+          const text = sel.cut({
             grid,
             setCell: (r, c, v) => grid.setCell(r, c, v),
             getCell: (r, c) => grid.getCell(r, c),
             render: () => renderer.render(),
           });
+          if (text !== null) {
+            navigator.clipboard.writeText(text).catch(() => {});
+          }
         }
       }
-      if (event.ctrlKey && event.key.toLowerCase() === "v") {
-        event.preventDefault();
-        sel?.paste({
+    };
+
+    // Unified paste handler using the 'paste' event (works even when
+    // the hidden textarea has focus, which is the case when the text tool is active).
+    const handlePaste = (event: ClipboardEvent) => {
+      const text = event.clipboardData?.getData("text/plain");
+      if (!text) return;
+      event.preventDefault();
+
+      const textTool = toolManagerRef.current?.getTextTool();
+      if (textTool && textTool.isActive()) {
+        const ctx: ToolContext = {
           grid,
           setCell: (r, c, v) => grid.setCell(r, c, v),
           getCell: (r, c) => grid.getCell(r, c),
           render: () => renderer.render(),
-        });
+        };
+        textTool.pasteText(text, ctx);
+      } else {
+        const sel = toolManagerRef.current?.getSelectTool();
+        if (sel) {
+          sel.paste(text, {
+            grid,
+            setCell: (r, c, v) => grid.setCell(r, c, v),
+            getCell: (r, c) => grid.getCell(r, c),
+            render: () => renderer.render(),
+          });
+        }
       }
     };
 
     window.addEventListener("keydown", handleKey);
+    window.addEventListener("paste", handlePaste);
 
     return () => {
       window.removeEventListener("resize", resize);
       window.removeEventListener("keydown", handleKey);
+      window.removeEventListener("paste", handlePaste);
       inputRef.current?.detach();
     };
   }, [grid]);
