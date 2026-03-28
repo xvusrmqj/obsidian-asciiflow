@@ -3,7 +3,7 @@
   "name": "ASCIIFlow",
   "version": "1.0.0",
   "minAppVersion": "1.5.0",
-  "description": "Draw ASCII art diagrams directly in Obsidian code blocks with an interactive editor.",
+  "description": "Draw ASCII art diagrams directly in code blocks with an interactive editor.",
   "author": "xvusrmqj",
   "authorUrl": "https://github.com/xvusrmqj",
   "isDesktopOnly": false
