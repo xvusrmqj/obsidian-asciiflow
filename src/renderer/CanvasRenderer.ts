@@ -1,5 +1,6 @@
 import { Grid } from "../model/Grid";
 import { charWidth } from "../model/CharWidth";
+import { DragPreview } from "../tools/SelectTool";
 
 export type CanvasTheme = {
   background: string;
@@ -26,6 +27,7 @@ export class CanvasRenderer {
   private zoom = 1;
   private selection: { startRow: number; startCol: number; endRow: number; endCol: number } | null = null;
   private textCursor: { row: number; col: number } | null = null;
+  private dragPreview: DragPreview | null = null;
 
   constructor(canvas: HTMLCanvasElement, grid: Grid, options: CanvasRendererOptions, theme: CanvasTheme) {
     const ctx = canvas.getContext("2d");
@@ -145,6 +147,38 @@ export class CanvasRenderer {
       ctx.strokeRect(x, y, w, h);
     }
 
+    // Draw drag preview overlay
+    if (this.dragPreview) {
+      const { grid: previewGrid, targetRow, targetCol, sourceSelection, copyMode } = this.dragPreview;
+      // Dim the source region (move mode only)
+      if (!copyMode) {
+        const sx = sourceSelection.startCol * cellWidth;
+        const sy = sourceSelection.startRow * cellHeight;
+        const sw = (sourceSelection.endCol - sourceSelection.startCol + 1) * cellWidth;
+        const sh = (sourceSelection.endRow - sourceSelection.startRow + 1) * cellHeight;
+        ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+        ctx.fillRect(sx, sy, sw, sh);
+      }
+      // Draw preview characters at target position
+      ctx.fillStyle = this.theme.foreground || "#e0e0e0";
+      previewGrid.forEachCell(({ row, col, value }) => {
+        const x = (targetCol + col) * cellWidth + 2;
+        const y = (targetRow + row) * cellHeight + cellHeight - 4;
+        ctx.fillText(value, x, y);
+      });
+      // Draw preview border
+      const { rows: pRows, cols: pCols } = previewGrid.getSize();
+      const px = targetCol * cellWidth;
+      const py = targetRow * cellHeight;
+      const pw = pCols * cellWidth;
+      const ph = pRows * cellHeight;
+      ctx.strokeStyle = copyMode ? "rgba(100, 255, 100, 0.7)" : "rgba(100, 150, 255, 0.7)";
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 4]);
+      ctx.strokeRect(px, py, pw, ph);
+      ctx.setLineDash([]);
+    }
+
     // Draw text cursor (blinking line)
     if (this.textCursor) {
       const { row, col } = this.textCursor;
@@ -159,6 +193,10 @@ export class CanvasRenderer {
 
   setSelection(sel: { startRow: number; startCol: number; endRow: number; endCol: number } | null) {
     this.selection = sel;
+  }
+
+  setDragPreview(preview: DragPreview | null) {
+    this.dragPreview = preview;
   }
 
   setTextCursor(cursor: { row: number; col: number } | null) {

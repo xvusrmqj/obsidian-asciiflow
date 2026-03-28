@@ -37,7 +37,8 @@ export function AsciiFlowApp({ initialText, onSave, onCancel }: AsciiFlowAppProp
     startCol: 0,
     row: 0,
     col: 0,
-    isDragging: false
+    isDragging: false,
+    ctrlKey: false
   });
 
   // Keep the ref in sync so pointer handlers always see the latest tool
@@ -88,6 +89,9 @@ export function AsciiFlowApp({ initialText, onSave, onCancel }: AsciiFlowAppProp
     selectTool.setClearHighlight(() => {
       renderer.setSelection(null);
     });
+    selectTool.setRenderDragPreview((preview) => {
+      renderer.setDragPreview(preview);
+    });
 
     // Wire text tool cursor to renderer
     const textTool = toolManagerRef.current.getTextTool();
@@ -108,28 +112,31 @@ export function AsciiFlowApp({ initialText, onSave, onCancel }: AsciiFlowAppProp
     inputRef.current = new InputHandler(
       canvas,
       { cellWidth: options.cellWidth, cellHeight: options.cellHeight },
-      (row, col) => {
+      (row, col, ctrlKey) => {
         setCursor({ row, col });
         const state = pointerStateRef.current;
         state.startRow = row;
         state.startCol = col;
         state.row = row;
         state.col = col;
+        state.ctrlKey = ctrlKey;
         state.isDragging = true;
         toolManagerRef.current?.setActiveTool(activeToolRef.current);
         toolManagerRef.current?.handlePointerDown({ ...state });
       },
-      (row, col) => {
+      (row, col, ctrlKey) => {
         setCursor({ row, col });
         const state = pointerStateRef.current;
         state.row = row;
         state.col = col;
+        state.ctrlKey = ctrlKey;
         toolManagerRef.current?.handlePointerMove({ ...state });
       },
-      (row, col) => {
+      (row, col, ctrlKey) => {
         const state = pointerStateRef.current;
         state.row = row;
         state.col = col;
+        state.ctrlKey = ctrlKey;
         state.isDragging = false;
         toolManagerRef.current?.handlePointerUp({ ...state });
       }

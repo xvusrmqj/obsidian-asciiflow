@@ -14,17 +14,17 @@ export type InputState = {
 export class InputHandler {
   private canvas: HTMLCanvasElement;
   private options: InputHandlerOptions;
-  private onCellClick: (row: number, col: number) => void;
-  private onCellDrag: (row: number, col: number) => void;
-  private onPointerUp: (row: number, col: number) => void;
+  private onCellClick: (row: number, col: number, ctrlKey: boolean) => void;
+  private onCellDrag: (row: number, col: number, ctrlKey: boolean) => void;
+  private onPointerUp: (row: number, col: number, ctrlKey: boolean) => void;
   private state: InputState = { pointerDown: false, lastRow: -1, lastCol: -1 };
 
   constructor(
     canvas: HTMLCanvasElement,
     options: InputHandlerOptions,
-    onCellClick: (row: number, col: number) => void,
-    onCellDrag: (row: number, col: number) => void,
-    onPointerUp: (row: number, col: number) => void
+    onCellClick: (row: number, col: number, ctrlKey: boolean) => void,
+    onCellDrag: (row: number, col: number, ctrlKey: boolean) => void,
+    onPointerUp: (row: number, col: number, ctrlKey: boolean) => void
   ) {
     this.canvas = canvas;
     this.options = options;
@@ -57,7 +57,7 @@ export class InputHandler {
     const { row, col } = this.getCellFromEvent(event);
     this.state.lastRow = row;
     this.state.lastCol = col;
-    this.onCellClick(row, col);
+    this.onCellClick(row, col, event.ctrlKey);
   };
 
   private handlePointerMove = (event: PointerEvent) => {
@@ -66,13 +66,13 @@ export class InputHandler {
     if (row === this.state.lastRow && col === this.state.lastCol) return;
     this.state.lastRow = row;
     this.state.lastCol = col;
-    this.onCellDrag(row, col);
+    this.onCellDrag(row, col, event.ctrlKey);
   };
 
-  private handlePointerUp = () => {
+  private handlePointerUp = (event: PointerEvent) => {
     if (!this.state.pointerDown) return;
     this.state.pointerDown = false;
-    this.onPointerUp(this.state.lastRow, this.state.lastCol);
+    this.onPointerUp(this.state.lastRow, this.state.lastCol, event.ctrlKey);
   };
 
   private getCellFromEvent(event: PointerEvent) {

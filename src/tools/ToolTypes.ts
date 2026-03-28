@@ -6,4 +6,5 @@ export type ToolPointerState = {
   row: number;
   col: number;
   isDragging: boolean;
+  ctrlKey: boolean;
 };
