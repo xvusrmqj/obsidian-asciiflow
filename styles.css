@@ -17,10 +17,10 @@
 
 .asciiflow-edit-button {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 0px;
+  right: 32px;
   font-size: 12px;
-  padding: 4px 8px;
+  padding: 0px 4px;
   background: var(--interactive-accent);
   color: var(--text-on-accent);
   border: none;
